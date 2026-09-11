@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>fix_2</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<p>Fixing both. One correction to my earlier report first:
+<code>ta()</code> is used by the Legacy page too, so it’s
+<strong>three</strong> pages affected, not two.</p>
+<p>Replacing 5 lines with 5 lines in</p>
+<pre><code></code></pre>
+<p>Now verifying all three pages save, and that the export picks up
+People/Places.</p>
+<p>Ran Playwright code Completed with input: const errs = [];
+page.on(‘pageerror’, e =&gt; errs.push(e.message)); await
+page.evaluate(() =&gt;
+localStorage.removeItem(‘unwritten_lands_character_v2’)); await
+page.reload();</p>
+<p>// 05 Who I Am (ta -&gt; traits) await page.click(‘nav
+button[data-p=“traits”]’); await page.fill(‘main textarea &gt;&gt;
+nth=0’, ‘Vengeful’); await page.fill(‘main textarea &gt;&gt; nth=1’,
+‘Lost her village’);</p>
+<p>// 02 Background (ta2 -&gt; events) await page.click(‘nav
+button[data-p=“bg”]’); await page.click(‘main button.primary’); await
+page.fill(‘main textarea &gt;&gt; nth=0’, ‘The Burning’); await
+page.fill(‘main textarea &gt;&gt; nth=1’, ‘Rolled 47’); await
+page.fill(‘main textarea &gt;&gt; nth=7’, ‘Who set the fire’);</p>
+<p>// 10 Legacy (ta -&gt; legacy) await page.click(‘nav
+button[data-p=“legacy”]’); await page.fill(‘main textarea &gt;&gt;
+nth=0’, ‘12’); await page.fill(‘main textarea &gt;&gt; nth=2’, ‘Held the
+bridge’);</p>
+<p>// 03 People (generic keys vs export) await page.click(‘nav
+button[data-p=“people”]’); await page.click(‘main button.primary’);
+await page.fill(‘main textarea &gt;&gt; nth=0’, ‘Mara’); await
+page.fill(‘main textarea &gt;&gt; nth=2’, ‘Revenge’);</p>
+<p>// navigate away and back to prove it round-trips from storage, not
+just the DOM await page.click(‘nav button[data-p=“id”]’); await
+page.click(‘nav button[data-p=“bg”]’); const titleBox = await
+page.inputValue(‘main textarea &gt;&gt; nth=0’);</p>
+<p>const s = await page.evaluate(() =&gt;
+JSON.parse(localStorage.getItem(‘unwritten_lands_character_v2’)));
+return { pageErrors: errs, traits: s.traits, event0: s.events[0],
+legacy: s.legacy, people0: s.people[0], titleAfterRoundTrip: titleBox
+};</p>
+<p>Both pages round-trip cleanly with zero errors. Last check —
+capturing the actual workbook XML to confirm People/Places now
+export.</p>
+<p>Ran Playwright code Completed with input: const xml = await
+page.evaluate(async () =&gt; { let captured = null; const realCreate =
+URL.createObjectURL, realRevoke = URL.revokeObjectURL;
+URL.createObjectURL = b =&gt; { captured = b; return ‘blob:stub’; };
+URL.revokeObjectURL = () =&gt; {}; HTMLAnchorElement.prototype.click =
+function(){}; // don’t actually download downloadSpreadsheet(); const
+text = await captured.text(); URL.createObjectURL = realCreate;
+URL.revokeObjectURL = realRevoke; return text; }); const grab = name
+=&gt; (xml.match(new
+RegExp(<code>&lt;Worksheet ss:Name="${name}"&gt;.*?&lt;/Worksheet&gt;</code>))||[’’])[0];
+return { peopleSheet: grab(‘People’), placesSheet: grab(‘Places’),
+traitsHasVengeful: xml.includes(‘Vengeful’), eventsHasBurning:
+xml.includes(‘The Burning’), legacyHasBridge: xml.includes(‘Held the
+bridge’) };</p>
+<p>Ran Playwright code Completed with input: await page.evaluate(()
+=&gt; localStorage.removeItem(‘unwritten_lands_character_v2’)); await
+page.reload(); // discard the click() stub my test installed return
+await page.evaluate(() =&gt; ({ storage:
+localStorage.getItem(‘unwritten_lands_character_v2’), clickIsNative:
+HTMLAnchorElement.prototype.click.toString().includes(‘native code’)
+}));</p>
+<p>Both fixed and verified in the browser — all three affected pages now
+save, and People/Places data reaches the spreadsheet.</p>
+<p>Three edits to <code>index.html</code>:</p>
+<ul>
+<li><code>index.html:66</code> and <code>index.html:119</code> — quoted
+the interpolated key so the generated handler is
+<code>d.traits['dark']=…</code> and <code>d.events[0]['result']=…</code>
+instead of bare identifiers. This matches the <code>['${k}']</code> form
+already used in <code>generic()</code> at <code>index.html:123</code>.
+One fix covers pages 02, 05 and 10, since <code>ta()</code> serves both
+Who I Am and Legacy.</li>
+<li><code>index.html:171-172</code> — the export now reads
+<code>whattheywant</code>, <code>whatiwant</code>,
+<code>whatiremember</code>, <code>peopleconnected</code>, which is what
+<code>generic()</code> actually derives from the column labels. I fixed
+the reader rather than the writer so existing journals keep their
+data.</li>
+</ul>
+<p>Verified against a live page: zero <code>pageerror</code>s while
+typing, values round-trip through localStorage after navigating away and
+back, no more junk <code>""</code> key on events, and the captured
+workbook XML puts <code>Revenge</code> under the “What They Want”
+column. I cleared my test journal afterward.</p>
+<p>One consequence worth knowing: anything typed into those three pages
+before this fix was never written to storage, so there’s nothing to
+recover. Old background events may also carry an inert <code>""</code>
+key from the <code>title</code> misfire — harmless, nothing reads or
+exports it.</p>
+<p>Still open from the review, if you want them: the unvalidated import
+that can brick a journal at <code>index.html:193</code>, the two
+unescaped interpolations at <code>index.html:111</code> and
+<code>index.html:131</code>, the immediate <code>revokeObjectURL</code>,
+and the duplicate-ID-after-delete numbering.</p>
+<p>Made changes.</p>
+</body>
+</html>
