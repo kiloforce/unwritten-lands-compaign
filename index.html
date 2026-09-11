@@ -1,1 +1,196 @@
-hello
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Unwritten Lands — Character Creation</title>
+<style>
+body{margin:0;background:#f4f1ea;color:#29251f;font-family:Georgia,serif}
+header{background:#29372f;color:white;padding:18px 22px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+header h2{margin:0 0 4px}
+header small{opacity:.85}
+main{max-width:1100px;margin:auto;padding:22px}
+nav{display:flex;gap:6px;flex-wrap:wrap;padding:12px;background:#e8e3d9;position:sticky;top:0;z-index:5}
+button{padding:9px 12px;border:1px solid #cfc7b8;border-radius:7px;background:white;cursor:pointer}
+button.active,button.primary{background:#4b5d50;color:white}
+button.gold{background:#80652f;color:white}
+button.danger{background:#8b3a3a;color:white}
+.card{background:#fffdf8;border:1px solid #d9d2c5;border-radius:11px;padding:18px;margin:15px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+label{font-weight:bold;font-size:13px;display:block;margin:5px 0}
+input,textarea,select{width:100%;box-sizing:border-box;padding:9px;border:1px solid #d2cabb;border-radius:6px;font:inherit;background:#fff}
+textarea{min-height:90px}
+.event{border-left:4px solid #4b5d50}
+.tag{float:right;background:#e4ebe5;border-radius:15px;padding:5px 8px;font:12px Arial}
+.notice{padding:12px 15px;background:#edf1ed;border-left:4px solid #4b5d50;border-radius:7px}
+.small{font-size:12px;color:#625c53}
+hr{border:0;border-top:1px solid #ddd5c7;margin:20px 0}
+@media(max-width:800px){.grid,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<div><h2>THE UNWRITTEN LANDS</h2><small>Character Creation Journal • Pathfinder • Roll20</small></div>
+<div>
+<button onclick="exportJ()">Backup Journal</button>
+<button class="gold" onclick="downloadSpreadsheet()">Download Spreadsheet</button>
+<button class="primary" onclick="exportGM()">Export for GM</button>
+<button onclick="document.getElementById('imp').click()">Import</button>
+<input id="imp" type="file" accept=".json" hidden onchange="importJ(event)">
+</div>
+</header>
+<nav id="nav"></nav>
+<main id="app"></main>
+
+<script>
+const K='unwritten_lands_character_v2';
+let d=JSON.parse(localStorage.getItem(K)||'null')||{
+ id:{name:'',player:'',ancestry:'',heritage:'',background:'',class:'',level:'1',keyAbility:'',alignment:'',homeland:'',deity:'',age:'',pronouns:'',concept:'',question:''},
+ events:[],people:[],places:[],
+ traits:{dark:'',origin:'',control:'',neutral:'',light:'',lightOrigin:''},
+ secrets:[],mysteries:[],sessions:[],revs:[],
+ legacy:{current:'0',total:'0',accomplishment:'',remembered:'',notRemembered:''}
+};
+
+const pages=[
+['id','01 · Character'],['bg','02 · Background'],['people','03 · People'],['places','04 · Places'],
+['traits','05 · Who I Am'],['secrets','06 · Secrets'],['mysteries','07 · Mysteries'],
+['sessions','08 · Sessions'],['revs','09 · Revelations'],['legacy','10 · Legacy']
+];
+
+function save(){localStorage.setItem(K,JSON.stringify(d));}
+function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function nav(){document.getElementById('nav').innerHTML=pages.map(p=>`<button data-p="${p[0]}">${p[1]}</button>`).join('');
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.p))}
+function field(label,key,cls=''){return `<div class="${cls}"><label>${label}</label><input value="${esc(d.id[key]||'')}" oninput="d.id.${key}=this.value;save()"></div>`}
+function ta(label,key,obj='traits'){return `<div><label>${label}</label><textarea oninput="d.${obj}['${key}']=this.value;save()">${esc(d[obj][key]||'')}</textarea></div>`}
+
+function show(p){
+document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+let a=document.getElementById('app');
+
+if(p==='id') a.innerHTML=`
+<h2>My Life Before the Adventure</h2>
+<div class="notice"><b>The character is only the beginning.</b> As you create this character, you will also help create the history and details of The Unwritten Lands.</div>
+<div class="card"><h3>Pathfinder Character</h3><div class="grid3">
+${field('Character Name','name')}${field('Player','player')}${field('Level','level')}
+${field('Ancestry','ancestry')}${field('Heritage','heritage')}${field('Class','class')}
+${field('Background','background')}${field('Key Ability','keyAbility')}${field('Alignment','alignment')}
+${field('Homeland','homeland')}${field('Deity / Faith','deity')}${field('Age','age')}
+${field('Pronouns','pronouns')}${field('Character Concept','concept')}
+</div></div>
+<div class="card"><label>The Question I Can't Answer</label><textarea oninput="d.id.question=this.value;save()">${esc(d.id.question)}</textarea></div>
+`;
+
+if(p==='bg') a.innerHTML=`<h2>Character Background</h2>
+<p>Use the lifepath process to discover significant events from your character's past. Each important result can become part of the campaign world.</p>
+<div class="notice"><b>Remember:</b> a result is a starting point, not a prison. Interpret it, expand it, and work with the GM when something needs clarification.</div>
+<br><button class="primary" onclick="addEvent()">＋ Add Background Event</button>
+${d.events.map((e,i)=>event(e,i)).join('')}`;
+
+if(p==='people') generic(a,'People','people',['Name','Relationship','What They Want','What I Want']);
+if(p==='places') generic(a,'Places','places',['Code','Name','What I Remember','People Connected']);
+
+if(p==='traits') a.innerHTML=`<h2>Who I Am</h2>
+<div class="card"><b>A trait is a tendency, not a destiny.</b><p>Darkside, Neutral, and Lightside are roleplaying tendencies, not alignment restrictions.</p>
+<h3>Darkside</h3>${ta('Trait','dark')}${ta('Where did it come from?','origin')}${ta('How do I keep it under control?','control')}</div>
+<div class="card"><h3>Neutral</h3>${ta('Trait / tendency','neutral')}</div>
+<div class="card"><h3>Lightside</h3>${ta('Trait','light')}${ta('Where did it come from?','lightOrigin')}</div>`;
+
+if(p==='secrets') simple(a,'Secrets','secrets','Secret','What happens if revealed?');
+if(p==='mysteries') simple(a,'Mysteries','mysteries','Mystery','Evidence / Questions');
+if(p==='sessions') sessionPage(a);
+if(p==='revs') revPage(a);
+
+if(p==='legacy'){let l=d.legacy;a.innerHTML=`<h2>My Legacy</h2>
+<div class="grid"><div class="card">${ta('Current Legacy Points','current','legacy')}</div><div class="card">${ta('Total Earned','total','legacy')}</div></div>
+<div class="card">${ta('Greatest Accomplishment','accomplishment','legacy')}${ta('What I Hope People Remember','remembered','legacy')}${ta('What I Don’t Want History To Remember','notRemembered','legacy')}</div>`}
+save();
+}
+
+function event(e,i){return `<div class="card event"><span class="tag">${e.importance}/5 • ${esc(e.flag)}</span>
+<h3>${esc(e.id)} — ${esc(e.title||'Untitled Event')}</h3>
+<div class="grid">${ta2('Title','title',i)}${ta2('Lifepath / Table Result','result',i)}${ta2('My Expanded Version','expanded',i)}${ta2('People / NPCs','people',i)}
+${ta2('Place / Map Code','place',i)}${ta2('How It Changed Me','change',i)}${ta2('What I Believe','belief',i)}${ta2('What I Don’t Know','unknown',i)}</div>
+<div class="grid"><div><label>Campaign Importance</label><select onchange="d.events[${i}].importance=this.value;save();show('bg')">${[1,2,3,4,5].map(n=>`<option ${e.importance==n?'selected':''}>${n}</option>`).join('')}</select></div>
+<div><label>Campaign Flag</label><select onchange="d.events[${i}].flag=this.value;save();show('bg')">${['Character Only','Possible Hook','Build Into World','Player Secret','GM Secret','Connect to Another PC','Hold for Later'].map(x=>`<option ${e.flag===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
+<label>What could this create?</label><input value="${esc(e.creates)}" oninput="d.events[${i}].creates=this.value;save()"><br>
+<button class="danger" onclick="d.events.splice(${i},1);save();show('bg')">Delete</button></div>`}
+function ta2(l,k,i){return `<div><label>${l}</label><textarea oninput="d.events[${i}]['${k}']=this.value;save()">${esc(d.events[i][k])}</textarea></div>`}
+function addEvent(){let n=d.events.length+1;d.events.push({id:'BG-'+String(n).padStart(3,'0'),title:'',result:'',expanded:'',people:'',place:'',change:'',belief:'',unknown:'',importance:'3',flag:'Possible Hook',creates:''});save();show('bg')}
+
+function generic(a,title,key,cols){a.innerHTML=`<h2>${title}</h2><button class="primary" onclick="d.${key}.push({});save();show('${key}')">＋ Add</button>`+
+d[key].map((x,i)=>`<div class="card"><div class="grid">${cols.map(c=>{let k=c.toLowerCase().replace(/[^a-z]/g,'');return `<div><label>${c}</label><textarea oninput="d.${key}[${i}]['${k}']=this.value;save()">${esc(x[k])}</textarea></div>`}).join('')}</div>
+<button class="danger" onclick="d.${key}.splice(${i},1);save();show('${key}')">Delete</button></div>`).join('')}
+
+function simple(a,title,key,l1,l2){a.innerHTML=`<h2>${title}</h2><button class="primary" onclick="d.${key}.push({a:'',b:''});save();show('${key}')">＋ Add</button>`+
+d[key].map((x,i)=>`<div class="card">${ta3(l1,'a',key,i)}${ta3(l2,'b',key,i)}<button class="danger" onclick="d.${key}.splice(${i},1);save();show('${key}')">Delete</button></div>`).join('')}
+function ta3(l,k,key,i){return `<label>${l}</label><textarea oninput="d.${key}[${i}].${k}=this.value;save()">${esc(d[key][i][k])}</textarea>`}
+
+function sessionPage(a){a.innerHTML=`<h2>Session Journal</h2><button class="primary" onclick="d.sessions.push({n:d.sessions.length+1,date:'',location:'',happened:'',learned:'',past:'',next:'',points:''});save();show('sessions')">＋ New Session</button>`+
+d.sessions.map((s,i)=>`<div class="card"><h3>Session ${s.n}</h3>${['date','location','happened','learned','past','next','points'].map(k=>ta3(k.replace(/^./,c=>c.toUpperCase()),k,'sessions',i)).join('')}
+<button class="danger" onclick="d.sessions.splice(${i},1);save();show('sessions')">Delete</button></div>`).join('')}
+
+function revPage(a){a.innerHTML=`<h2>New Background Revelations</h2><p>A revelation changes something the character believed about their past.</p>
+<button class="primary" onclick="d.revs.push({id:'REV-'+String(d.revs.length+1).padStart(3,'0'),title:'',event:'',believed:'',truth:'',source:'',reaction:'',change:'',action:'',unknown:'',rating:'3'});save();show('revs')">＋ Add Revelation</button>`+
+d.revs.map((r,i)=>`<div class="card"><h3>${esc(r.id)}</h3>${ta3('Title','title','revs',i)}${ta3('Background Event ID','event','revs',i)}${ta3('What I Thought I Knew','believed','revs',i)}${ta3('What Was Revealed','truth','revs',i)}${ta3('Who/What Revealed It?','source','revs',i)}${ta3('My Reaction','reaction','revs',i)}${ta3('What Does This Change?','change','revs',i)}${ta3('What Do I Do Now?','action','revs',i)}${ta3('What I Don’t Know Yet','unknown','revs',i)}
+<label>Importance</label><select onchange="d.revs[${i}].rating=this.value;save()">${[1,2,3,4,5].map(n=>`<option ${r.rating==n?'selected':''}>${n}</option>`).join('')}</select></div>`).join('')}
+
+function exportJ(){let b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(d.id.name||'character')+'_journal.json';a.click();URL.revokeObjectURL(a.href)}
+
+function exportGM(){
+const pkg={
+ format:"The Unwritten Lands — Character GM Export v2",
+ exported:new Date().toISOString(),
+ playerCharacter:{id:d.id.name?"PC-"+String(d.id.name).trim().replace(/\s+/g,"-").toUpperCase():"PC-UNASSIGNED",...d.id},
+ backgroundEvents:d.events,
+ people:d.people, places:d.places,
+ traits:d.traits, secrets:d.secrets, mysteries:d.mysteries, revelations:d.revs,
+ sessionHighlights:d.sessions, legacy:d.legacy,
+ gmReview:{approved:false,notes:"GM review required before promoting anything to campaign canon."}
+};
+const b=new Blob([JSON.stringify(pkg,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(d.id.name||'character')+'_GM_Export.json';a.click();URL.revokeObjectURL(a.href);
+}
+
+/* Excel-compatible SpreadsheetML export: opens directly in Excel and contains multiple worksheets. */
+function xmlEsc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
+function cell(v){return `<Cell><Data ss:Type="String">${xmlEsc(v)}</Data></Cell>`}
+function row(vals){return `<Row>${vals.map(cell).join('')}</Row>`}
+function sheet(name,headers,rows){return `<Worksheet ss:Name="${xmlEsc(name)}"><Table>${row(headers)}${rows.map(r=>row(r)).join('')}</Table></Worksheet>`}
+function downloadSpreadsheet(){
+const now=new Date().toISOString();
+const sheets=[];
+sheets.push(sheet('Character',['Field','Value'],[
+['Campaign','The Unwritten Lands'],['System','Pathfinder'],['Player',d.id.player],['Character Name',d.id.name],['Level',d.id.level],
+['Ancestry',d.id.ancestry],['Heritage',d.id.heritage],['Background',d.id.background],['Class',d.id.class],['Key Ability',d.id.keyAbility],
+['Alignment',d.id.alignment],['Homeland',d.id.homeland],['Deity / Faith',d.id.deity],['Age',d.id.age],['Pronouns',d.id.pronouns],
+['Character Concept',d.id.concept],['Question I Can’t Answer',d.id.question],['Exported',now]
+]));
+sheets.push(sheet('Background Events',['ID','Title','Lifepath / Table Result','Expanded Version','People / NPCs','Place / Map Code','How It Changed Me','What I Believe','What I Don’t Know','Importance','Campaign Flag','What Could This Create'],
+d.events.map(e=>[e.id,e.title,e.result,e.expanded,e.people,e.place,e.change,e.belief,e.unknown,e.importance,e.flag,e.creates])));
+sheets.push(sheet('People',['Name','Relationship','What They Want','What I Want'],d.people.map(x=>[x.name||'',x.relationship||'',x.whattheywant||'',x.whatiwant||''])));
+sheets.push(sheet('Places',['Code','Name','What I Remember','People Connected'],d.places.map(x=>[x.code||'',x.name||'',x.whatiremember||'',x.peopleconnected||''])));
+sheets.push(sheet('Traits',['Type','Trait','Origin','Control / Expression'],[
+['Darkside',d.traits.dark,d.traits.origin,d.traits.control],['Neutral',d.traits.neutral,'',''],['Lightside',d.traits.light,d.traits.lightOrigin,'']
+]));
+sheets.push(sheet('Secrets',['Secret','What Happens If Revealed'],d.secrets.map(x=>[x.a||'',x.b||''])));
+sheets.push(sheet('Mysteries',['Mystery','Evidence / Questions'],d.mysteries.map(x=>[x.a||'',x.b||''])));
+sheets.push(sheet('Revelations',['ID','Title','Background Event ID','What I Thought I Knew','What Was Revealed','Who/What Revealed It','Reaction','What Does This Change','What Do I Do Now','What I Don’t Know Yet','Importance'],
+d.revs.map(r=>[r.id,r.title,r.event,r.believed,r.truth,r.source,r.reaction,r.change,r.action,r.unknown,r.rating])));
+sheets.push(sheet('Sessions',['Session','Date','Location','What Happened','What I Learned','Connection To My Past','What I Do Next','Legacy Points'],d.sessions.map(s=>[s.n,s.date,s.location,s.happened,s.learned,s.past,s.next,s.points])));
+sheets.push(sheet('Legacy',['Current Points','Total Earned','Greatest Accomplishment','What I Hope People Remember','What I Don’t Want History To Remember'],[[d.legacy.current,d.legacy.total,d.legacy.accomplishment,d.legacy.remembered,d.legacy.notRemembered]]));
+
+const xml=`<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:x="urn:schemas-microsoft-com:office:excel"
+xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Styles><Style ss:ID="Header"><Font ss:Bold="1"/></Style></Styles>${sheets.join('')}</Workbook>`;
+const blob=new Blob([xml],{type:'application/vnd.ms-excel'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(d.id.name||'character')+'_The_Unwritten_Lands.xls';a.click();URL.revokeObjectURL(a.href);
+}
+
+function importJ(e){let r=new FileReader();r.onload=()=>{try{d=JSON.parse(r.result);save();show('id')}catch{alert('Invalid journal backup')}};r.readAsText(e.target.files[0])}
+nav();show('id');
+</script>
+</body></html>
