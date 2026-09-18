@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="unwritten-lands-version" content="v6">
+<title>The Unwritten Lands — Character Creator v5</title>
+<style>
+:root{--ink:#26352d;--gold:#b28a35;--paper:#f4edda;--paper2:#fffaf0;--line:#d5c8a9;--red:#7c3d35;--green:#3f6650;--warn:#8a5b1b}
+*{box-sizing:border-box}body{margin:0;background:#d9d0bb;color:#282820;font-family:Georgia,serif}
+header{background:linear-gradient(135deg,#24352c,#405544);color:#fff;padding:22px 18px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:27px;letter-spacing:1px}header p{margin:5px 0 0;opacity:.9}
+.wrap{max-width:1100px;margin:0 auto;padding:18px}.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0;box-shadow:0 4px 14px #0001}
+h2,h3{color:var(--ink);margin-top:0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{font-weight:bold;color:var(--ink);display:block}input,textarea,select{width:100%;margin-top:5px;padding:10px;border:1px solid #bdae8f;border-radius:7px;background:var(--paper2);font:inherit}textarea{min-height:90px;resize:vertical}
+button{border:0;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:pointer;margin:4px;background:var(--ink);color:white}button.gold{background:#8a6a25}button.red{background:var(--red)}button.green{background:var(--green)}button.light{background:#ddd1b6;color:#2b332e}
+.steps{display:flex;gap:6px;overflow:auto;padding-bottom:4px}.step{white-space:nowrap;padding:8px 11px;border-radius:20px;background:#e4dac2}.step.active{background:var(--gold);color:#fff}
+.hidden{display:none}.hint{background:#ece4d0;border-left:4px solid var(--gold);padding:11px;margin:10px 0}.warning{background:#f4dfd4;border-left:4px solid var(--red);padding:11px;margin:10px 0}.safe{background:#e0ecdf;border-left:4px solid var(--green);padding:11px;margin:10px 0}.book{font-size:13px;color:#5c5548}
+.event{border:1px solid var(--line);background:#fff9ec;padding:12px;border-radius:9px;margin:9px 0}.event strong{color:var(--ink)}
+.dice{display:flex;flex-wrap:wrap;gap:5px}.dice button{background:#536b58}.pill{display:inline-block;background:#ded2b5;border-radius:14px;padding:4px 9px;margin:2px;font-size:12px}
+.status{font-weight:bold}.dangerText{color:#7c3d35}.small{font-size:12px}.mono{font-family:ui-monospace,monospace}
+.queueItem{border-left:5px solid var(--gold);background:#fff9ec;padding:12px;margin:9px 0;border-radius:8px}
+footer{text-align:center;padding:30px;color:#645e50}
+@media(max-width:700px){.grid{grid-template-columns:1fr}header h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>THE UNWRITTEN LANDS</h1><p>Character Creator v5 • Heroes of Legend 2nd Edition • AI-Assisted Safe Roll Workflow</p></div></header>
+<div class="wrap">
+<div class="card">
+  <div class="steps" id="steps"></div>
+  <div class="hint"><b>New workflow:</b> Roll only when the book tells you to. If a result sends you somewhere else, record the destination in the <b>Table Queue</b>. For any result that seems unusual, secretive, contradictory, or campaign-defining, <b>stop and paste the table code + roll + result into ChatGPT before deciding what it means.</b></div>
+  <div class="warning"><b>SECRET GUARD:</b> Never enter or paste the contents of Heroes of Legend tables 968 or 969, GM notes, planned revelations, hidden identities, or the true answer to a mystery into a player-facing file or group chat. If you think a result might be GM-only, stop and ask the GM/AI first.</div>
+</div>
+
+<section id="s0" class="card">
+<h2>1. Character Basics</h2>
+<div class="grid">
+<label>Player<input id="player"></label><label>Character Name<input id="name"></label>
+<label>Ancestry<input id="ancestry"></label><label>Heritage<input id="heritage"></label>
+<label>Class<input id="class"></label><label>Level<input id="level" value="1"></label>
+<label>Character Concept<input id="concept"></label><label>Pronouns<input id="pronouns"></label>
+</div>
+<label style="margin-top:12px">What do I already know about this character?<textarea id="preknown"></textarea></label>
+<button onclick="go(1)">Begin Background →</button>
+</section>
+
+<section id="s1" class="card hidden">
+<h2>2. Heritage & Birth — 101–107</h2>
+<p class="book">The normal workflow begins with 101–107, but the book allows already-decided character information to be recorded instead of rolling it. Table 106 is treated here as an optional <b>Birth Mystery</b> candidate.</p>
+<div id="coreTables"></div>
+<button class="light" onclick="addEvent('Core Table Result')">+ Add Additional Core Result</button>
+<button onclick="go(2)">Continue to Youth →</button>
+</section>
+
+<section id="s2" class="card hidden">
+<h2>3. Childhood & Adolescence — 208</h2>
+<p class="book">Use 208 Significant Events of Youth as directed. A result may send you to another table. When that happens, create a queue item rather than skipping ahead.</p>
+<div class="dice" id="dice208"></div>
+<div id="youthEvents"></div>
+<button class="gold" onclick="newEvent('208','Significant Event of Youth')">+ Record 208 Event</button>
+<button onclick="go(3)">Continue to Occupations & Hobbies →</button>
+</section>
+
+<section id="s3" class="card hidden">
+<h2>4. Occupations & Hobbies — 309–318</h2>
+<p class="book">Use the occupation branch indicated by the book and character circumstances. Record skills as <b>background evidence</b>; Pathfinder remains the actual game mechanic.</p>
+<div id="occupationEvents"></div>
+<button class="gold" onclick="newEvent('309–318','Occupation / Hobby Result')">+ Record Occupation / Hobby</button>
+<button onclick="go(4)">Continue to Adulthood →</button>
+</section>
+
+<section id="s4" class="card hidden">
+<h2>5. Adulthood — 419</h2>
+<p class="book"><b>Beginning adventurers make one 419 roll.</b> Older characters may make additional rolls as directed. Record cross-references and trait letters. Treat extraordinary results as campaign-level possibilities until reviewed.</p>
+<div class="dice" id="dice419"></div>
+<div id="adultEvents"></div>
+<button class="gold" onclick="newEvent('419','Significant Event of Adulthood')">+ Record 419 Event</button>
+<button onclick="go(5)">Continue to Personality →</button>
+</section>
+
+<section id="s5" class="card hidden">
+<h2>6. Personality — 520–523</h2>
+<p class="book">Use 520 Values, then 521 Alignment & Attitude. Resolve 522/523 traits when directed. <b>Darkside / Neutral / Lightside are personality tendencies, not Pathfinder alignment restrictions.</b></p>
+<div class="grid">
+<label>Primary Motivation<input id="mot1"></label><label>Primary Motivation Strength<input id="mot1s" placeholder="Trivial / Weak / Average / Strong / Driving / Obsessive"></label>
+<label>Secondary Motivation<input id="mot2"></label><label>Secondary Motivation Strength<input id="mot2s"></label>
+<label>Optional Third Motivation<input id="mot3"></label><label>Optional Third Strength<input id="mot3s"></label>
+</div>
+<label style="margin-top:12px">Values (520)<textarea id="values"></textarea></label>
+<label>Personality Traits (522/523)<textarea id="traits"></textarea></label>
+<div class="grid">
+<label>Darkside Traits<textarea id="dark"></textarea></label><label>Neutral Traits<textarea id="neutral"></textarea></label>
+<label>Lightside Traits<textarea id="light"></textarea></label><label>Pathfinder Alignment / Attitude<textarea id="alignment"></textarea></label>
+</div>
+<button onclick="go(6)">Finish & Review →</button>
+</section>
+
+<section id="s6" class="card hidden">
+<h2>7. Finishing Touches & Linking Events</h2>
+<p class="book">The book's finishing sequence calls for motivation review, conversion of skills into the chosen game system, then Appendix B: Linking Events. In The Unwritten Lands, linking is also where background threads become possible world-building seeds.</p>
+<div class="grid">
+<label>Primary Motivation — in my own words<textarea id="motwords"></textarea></label>
+<label>How the events connect into one life story<textarea id="history"></textarea></label>
+</div>
+<div class="grid">
+<label>What I believe about my past<textarea id="beliefs"></textarea></label>
+<label>What I don't know yet / possible mysteries<textarea id="unknown"></textarea></label>
+<label>Places I created or want the GM to develop<textarea id="places"></textarea></label>
+<label>People I created or want the GM to develop<textarea id="people"></textarea></label>
+<label>Campaign ideas / things I would love to see from my background<textarea id="hooks"></textarea></label>
+<label>How my background could connect to another PC<textarea id="pcconnect"></textarea></label>
+</div>
+<div class="card" style="background:#ebe1c7"><h3>GM Submission</h3><p>Everything here is a <b>proposal</b> until the GM approves it. The export contains a player-safe submission and a structured review queue.</p>
+<button class="gold" onclick="exportXlsx()">SUBMIT TO GM — EXCEL</button>
+<button class="green" onclick="copyPacket()">COPY SAFE AI REVIEW PACKET</button>
+<button onclick="exportJson()">Backup — JSON</button>
+<button class="light" onclick="window.print()">Print / Save PDF</button>
+</div>
+</section>
+
+<section class="card">
+<h2>Table Queue & Bookmark Stack</h2>
+<p class="book">This replaces the old linear checklist. The book instructs you to leave a bookmark when a table sends you elsewhere, follow the new branch, then return to the most recent bookmark. Use this queue to mirror that process.</p>
+<div class="warning"><b>AI checkpoint:</b> Before you enter a surprising result into the queue, paste <span class="mono">Table Code + Roll + Result</span> into ChatGPT. I can tell you whether it appears to call for another table, a return, a sensitive interpretation, or GM review.</div>
+<div class="grid">
+<label>Current / New Table Code<input id="q_code" placeholder="e.g. 757"></label>
+<label>Sent Here By<input id="q_from" placeholder="e.g. 107b or BG-003"></label>
+<label>Roll<input id="q_roll"></label>
+<label>Result — your own words<textarea id="q_result"></textarea></label>
+<label>Next Table(s) / Branch<input id="q_next" placeholder="e.g. 754, 865, or RETURN"></label>
+<label>Return / Bookmark Target<input id="q_return" placeholder="Table or event to return to"></label>
+<label>Sensitivity<select id="q_sens"><option>Normal</option><option>Potential Secret — Review</option><option>Player-Unknown — Review</option><option>GM-Only — Do Not Share</option></select></label>
+<label>AI / GM Status<select id="q_status"><option>Needs AI Review</option><option>AI Reviewed — Safe to Record</option><option>GM Review Required</option><option>Completed</option></select></label>
+</div>
+<button class="gold" onclick="addQueue()">Add Queue Item</button>
+<button class="light" onclick="clearQueueForm()">Clear</button>
+<div id="queue"></div>
+</section>
+
+<section class="card">
+<h2>Background Event Ledger</h2>
+<p class="book">Every significant event gets a permanent BG-### ID. Use these as anchors for NPCs, locations, organizations, mysteries, threats, revelations, and Legacy.</p>
+<div id="ledger"></div>
+</section>
+
+<section class="card">
+<h2>Pathfinder Conversion Layer</h2>
+<p class="book">Heroes of Legend Rank is descriptive background evidence. It does not replace Pathfinder's skills, feats, proficiencies, attributes, age rules, or other mechanics.</p>
+<div class="grid">
+<label>Background Skill / Training Candidates<textarea id="convskills" placeholder="What does the history justify knowing?"></textarea></label>
+<label>Mechanical Conversion Requests<textarea id="convmech" placeholder="Possible Pathfinder skill, Lore, feat, language, contact, item, boon, etc."></textarea></label>
+<label>Extraordinary / Campaign-Level Results<textarea id="convcampaign" placeholder="Lycanthropy, unusual birth, guardian, resurrection, powerful contact, etc."></textarea></label>
+<label>GM Conversion Notes<textarea id="convnotes" placeholder="Keep GM-only mechanics or secrets out of player submission."></textarea></label>
+</div>
+<div class="hint"><b>Conversion rule:</b> history establishes why the character could plausibly know or have something; Pathfinder determines what that means mechanically. Extraordinary results are reviewed rather than granted automatically.</div>
+</section>
+
+<section class="card">
+<h2>Canon & Safety Check</h2>
+<div id="guard"></div>
+<button class="green" onclick="runGuard()">RUN SECRET / CANON CHECK</button>
+</section>
+
+<footer>The Unwritten Lands • Character history creates the world • v5 Safe AI-Assisted Workflow</footer>
+</div>
+
+<script>
+const state={events:[],core:[],queue:[],data:{},review:{}};
+const coreCodes=[
+ ['101','Race & Ancestry','17'],['102','Cultural Background','20'],['103','Social Status','24'],
+ ['104','Birth & Family','28'],['105','Place & Time of Birth','30'],['106','Unusual Births (optional)','32'],['107','Parents & NPCs','35']
+];
+let current=0;
+const ids=['s0','s1','s2','s3','s4','s5','s6'];
+function el(id){return document.getElementById(id)}
+function val(id){return el(id)?.value||''}
+function setv(id,v){if(el(id))el(id).value=v||''}
+function save(){
+ state.data={};document.querySelectorAll('input,textarea,select').forEach(x=>{if(x.id)state.data[x.id]=x.value});
+ localStorage.setItem('unwrittenLandsCC2eV5',JSON.stringify(state));renderLedger();renderQueue();runGuard();
+}
+function load(){
+ try{const x=JSON.parse(localStorage.getItem('unwrittenLandsCC2eV5')||'null');if(!x)return;Object.assign(state,x);Object.entries(state.data||{}).forEach(([k,v])=>setv(k,v))}
+ catch(e){}
+}
+function go(n){save();current=n;ids.forEach((id,i)=>el(id).classList.toggle('hidden',i!==n));renderSteps();window.scrollTo({top:0,behavior:'smooth'})}
+function renderSteps(){el('steps').innerHTML=['Basics','101–107','208 Youth','309–318','419 Adult','520–523','Finish'].map((x,i)=>`<span class="step ${i===current?'active':''}" onclick="go(${i})">${i+1}. ${x}</span>`).join('')}
+function diceButton(d){return `<button onclick="rollDice('${d}')">${d}</button>`}
+function rollDice(d){
+ let n=1,s=20,mod=0;
+ if(d.includes('d')){let m=d.match(/(\d+)d(\d+)([+-]\d+)?/i);if(m){n=+m[1];s=+m[2];mod=+(m[3]||0)}}
+ let total=mod;for(let i=0;i<n;i++)total+=1+Math.floor(Math.random()*s);
+ el('q_roll').value=total;save();
+ alert(`${d} = ${total}\\n\\nNow read that result in the book and paste the Table Code + result here for AI review before committing it.`);
+ return total
+}
+function buildDice(){el('dice208').innerHTML=[diceButton('d20'),diceButton('2d20')].join('');el('dice419').innerHTML=[diceButton('2d20'),diceButton('d3')].join('')}
+function coreUI(){
+ el('coreTables').innerHTML=coreCodes.map(([c,n,p])=>`<div class="event">
+<b>${c} — ${n}</b> <span class="pill">Book p. ${p}</span>
+<label>Book roll / result<textarea id="core_${c}" placeholder="Enter only your roll and the result in your own words."></textarea></label>
+<label>Player interpretation / details<textarea id="core_i_${c}" placeholder="What does this mean for your character?"></textarea></label>
+<label>Potential next table / branch<input id="core_next_${c}" placeholder="Only if the result directs you elsewhere"></label>
+</div>`).join('');
+}
+function newEvent(code,title){
+ const id='BG-'+String(state.events.length+1).padStart(3,'0');
+ state.events.push({id,code,title,age:'',roll:'',result:'',interp:'',people:'',place:'',impact:'',trait:'',importance:'',flag:'',creates:'',belief:'',unknown:'',mechanical:'',status:'Needs AI Review'});
+ renderLedger();save();
+}
+function addEvent(title){newEvent('101–107',title)}
+function editEvent(id,k,v){let x=state.events.find(e=>e.id===id);if(x){x[k]=v;save()}}
+function renderLedger(){
+ const host=el('ledger'); if(!host)return;
+ host.innerHTML=state.events.length?state.events.map(e=>`<div class="event">
+<strong>${e.id}</strong> <span class="pill">${e.code}</span> ${e.title}
+<div class="grid">
+<label>Age / Period<input value="${esc(e.age)}" oninput="editEvent('${e.id}','age',this.value)"></label>
+<label>Roll<input value="${esc(e.roll)}" oninput="editEvent('${e.id}','roll',this.value)"></label>
+</div>
+<label>Result / entry<textarea oninput="editEvent('${e.id}','result',this.value)">${esc(e.result)}</textarea></label>
+<label>Player interpretation<textarea oninput="editEvent('${e.id}','interp',this.value)">${esc(e.interp)}</textarea></label>
+<div class="grid">
+<label>People / NPCs<input value="${esc(e.people)}" oninput="editEvent('${e.id}','people',this.value)"></label>
+<label>Place / Map Code<input value="${esc(e.place)}" oninput="editEvent('${e.id}','place',this.value)"></label>
+<label>Character Impact<textarea oninput="editEvent('${e.id}','impact',this.value)">${esc(e.impact)}</textarea></label>
+<label>Trait Letter<input value="${esc(e.trait)}" placeholder="L / N / D / R" oninput="editEvent('${e.id}','trait',this.value)"></label>
+<label>Importance 1–5<input value="${esc(e.importance)}" oninput="editEvent('${e.id}','importance',this.value)"></label>
+<label>Campaign Flag<select onchange="editEvent('${e.id}','flag',this.value)"><option ${e.flag==='Character Only'?'selected':''}>Character Only</option><option ${e.flag==='Possible Campaign Hook'?'selected':''}>Possible Campaign Hook</option><option ${e.flag==='Build Into World'?'selected':''}>Build Into World</option><option ${e.flag==='Player Secret'?'selected':''}>Player Secret</option><option ${e.flag==='Connect to Another PC'?'selected':''}>Connect to Another PC</option><option ${e.flag==='Hold for Later'?'selected':''}>Hold for Later</option></select></label>
+<label>Potential Elements<textarea oninput="editEvent('${e.id}','creates',this.value)">${esc(e.creates)}</textarea></label>
+<label>What I Believe<textarea oninput="editEvent('${e.id}','belief',this.value)">${esc(e.belief)}</textarea></label>
+<label>What I Don't Know<textarea oninput="editEvent('${e.id}','unknown',this.value)">${esc(e.unknown)}</textarea></label>
+<label>Pathfinder Conversion Candidate<textarea oninput="editEvent('${e.id}','mechanical',this.value)">${esc(e.mechanical)}</textarea></label>
+<label>Review Status<select onchange="editEvent('${e.id}','status',this.value)"><option ${e.status==='Needs AI Review'?'selected':''}>Needs AI Review</option><option ${e.status==='AI Reviewed — Safe to Record'?'selected':''}>AI Reviewed — Safe to Record</option><option ${e.status==='GM Review Required'?'selected':''}>GM Review Required</option><option ${e.status==='Completed'?'selected':''}>Completed</option></select></label>
+</div>
+<button class="red" onclick="delEvent('${e.id}')">Delete</button>
+</div>`).join(''):'<p>No events recorded yet.</p>';
+}
+function delEvent(id){state.events=state.events.filter(e=>e.id!==id);save();renderLedger()}
+function addQueue(){
+ const id='Q-'+String(state.queue.length+1).padStart(3,'0');
+ const q={id,code:val('q_code'),from:val('q_from'),roll:val('q_roll'),result:val('q_result'),next:val('q_next'),ret:val('q_return'),sens:val('q_sens'),status:val('q_status'),created:new Date().toISOString()};
+ if(!q.code&&!q.result){alert('Enter at least the table code or result.');return}
+ state.queue.push(q);clearQueueForm();save();renderQueue();
+}
+function editQueue(id,k,v){let q=state.queue.find(x=>x.id===id);if(q){q[k]=v;save()}}
+function delQueue(id){state.queue=state.queue.filter(x=>x.id!==id);save();renderQueue()}
+function clearQueueForm(){['q_code','q_from','q_roll','q_result','q_next','q_return'].forEach(id=>setv(id,''));setv('q_sens','Normal');setv('q_status','Needs AI Review')}
+function renderQueue(){
+ const h=el('queue');if(!h)return;
+ h.innerHTML=state.queue.length?state.queue.map(q=>`<div class="queueItem">
+<strong>${q.id}</strong> <span class="pill">Table ${esc(q.code)}</span> <span class="pill">${esc(q.status)}</span> <span class="pill">${esc(q.sens)}</span>
+<div class="grid">
+<label>Sent Here By<input value="${esc(q.from)}" oninput="editQueue('${q.id}','from',this.value)"></label>
+<label>Roll<input value="${esc(q.roll)}" oninput="editQueue('${q.id}','roll',this.value)"></label>
+<label>Result<textarea oninput="editQueue('${q.id}','result',this.value)">${esc(q.result)}</textarea></label>
+<label>Next Table(s)<input value="${esc(q.next)}" oninput="editQueue('${q.id}','next',this.value)"></label>
+<label>Return / Bookmark<input value="${esc(q.ret)}" oninput="editQueue('${q.id}','ret',this.value)"></label>
+<label>Sensitivity<select onchange="editQueue('${q.id}','sens',this.value)"><option ${q.sens==='Normal'?'selected':''}>Normal</option><option ${q.sens==='Potential Secret — Review'?'selected':''}>Potential Secret — Review</option><option ${q.sens==='Player-Unknown — Review'?'selected':''}>Player-Unknown — Review</option><option ${q.sens==='GM-Only — Do Not Share'?'selected':''}>GM-Only — Do Not Share</option></select></label>
+<label>Status<select onchange="editQueue('${q.id}','status',this.value)"><option ${q.status==='Needs AI Review'?'selected':''}>Needs AI Review</option><option ${q.status==='AI Reviewed — Safe to Record'?'selected':''}>AI Reviewed — Safe to Record</option><option ${q.status==='GM Review Required'?'selected':''}>GM Review Required</option><option ${q.status==='Completed'?'selected':''}>Completed</option></select></label>
+</div>
+<button class="green" onclick="copyQueuePacket('${q.id}')">Copy Safe AI Packet</button><button class="red" onclick="delQueue('${q.id}')">Delete</button>
+</div>`).join(''):'<p>No queue items yet. Start here whenever a roll produces a result that needs another table or review.</p>';
+}
+function packetForQueue(q){
+ return `THE UNWRITTEN LANDS — AI ROLL REVIEW\\nCharacter: ${val('name')||'(unnamed)'}\\nTable Code: ${q.code||'(unknown)'}\\nSent Here By: ${q.from||'(unknown)'}\\nRoll: ${q.roll||'(unknown)'}\\nResult (player wording): ${q.result||'(none)'}\\n\\nPlease: 1) identify the next table/branch if the result directs one; 2) identify whether this appears to require a return/bookmark; 3) flag anything that may be GM-only, character-unknown, sensitive, contradictory, or campaign-defining; 4) tell me exactly what I should record in the player journal; 5) do not invent a result not supported by the book.\\n\\nDO NOT expose or request GM secrets.`;
+}
+function copyQueuePacket(id){
+ const q=state.queue.find(x=>x.id===id);if(!q)return;
+ navigator.clipboard?.writeText(packetForQueue(q)).then(()=>alert('Safe AI packet copied. Paste it into ChatGPT for review.')).catch(()=>prompt('Copy this safe AI packet:',packetForQueue(q)));
+}
+function copyPacket(){
+ const pending=state.queue.filter(q=>q.status==='Needs AI Review');
+ let text=`THE UNWRITTEN LANDS — SAFE AI REVIEW PACKET\\nCharacter: ${val('name')||'(unnamed)'}\\n\\n`;
+ if(!pending.length)text+='No pending table-queue items.\\n';
+ pending.forEach(q=>text+=packetForQueue(q)+'\\n---\\n');
+ navigator.clipboard?.writeText(text).then(()=>alert('Safe AI review packet copied.')).catch(()=>prompt('Copy this safe AI review packet:',text));
+}
+function exportJson(){
+ save();
+ const pkg={format:'UnwrittenLands-CC2E-PlayerBackup-v5',campaign:'The Unwritten Lands',system:'Pathfinder',bookWorkflow:'Heroes of Legend 2nd Edition',player:state.data.player,character:state.data.name,core:state.core,events:state.events,tableQueue:state.queue,data:state.data,review:{approved:false,canonRule:'Nothing becomes campaign canon until the GM approves it.'}};
+ download(JSON.stringify(pkg,null,2),(val('name')||'Character')+'_Unwritten_Lands_v5_Backup.json','application/json')
+}
+function runGuard(){
+ const text=JSON.stringify(state.data||{})+' '+JSON.stringify(state.events||{})+' '+JSON.stringify(state.queue||{});
+ const hits=[];
+ const patterns=[['GM-only language',/gm[- ]?only|do not share|for the gm|game master only/i],['Hidden truth language',/true identity|actual villain|real villain|secret identity|the real answer|hidden truth/i],['Future reveal language',/planned reveal|reveal later|when they find out|eventually reveal|future twist/i],['Secret/mystery marker',/\bsecret\b|\bspoiler\b/i]];
+ patterns.forEach(([name,re])=>{if(re.test(text))hits.push(name)});
+ const gmTables=/\b968\b|\b969\b/.test(text);
+ if(gmTables)hits.push('Table 968/969 reference');
+ const host=el('guard');if(!host)return;
+ host.innerHTML=hits.length?`<div class="warning"><b>REVIEW BEFORE SHARING:</b> ${[...new Set(hits)].join(', ')}.<br>This does not prove a secret exists. It means you should inspect the text and remove GM truth before exporting or posting it to a player-facing channel.</div>`:`<div class="safe"><b>No obvious secret-language flags detected.</b><br>This is only a heuristic. The safest workflow is still: roll → paste Table Code + Roll + Result here → let AI review the branch before you commit it.</div>`;
+}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function syncCore(){
+ state.core=state.core||[];
+ coreCodes.forEach(([c])=>{let x=state.core.find(q=>q.code===c);if(!x){x={code:c,result:'',interp:'',next:''};state.core.push(x)}x.result=val('core_'+c);x.interp=val('core_i_'+c);x.next=val('core_next_'+c)});
+}
+function xesc(s){return esc(s)}
+function colName(n){let s='';while(n){let r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=Math.floor((n-1)/26)}return s}
+function sheetXml(headers,rows){
+ let all=[headers,...rows],x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData">';
+ all.forEach((r,ri)=>{x+=`<row r="${ri+1}">`;r.forEach((v,ci)=>x+=`<c r="${colName(ci+1)}${ri+1}" t="inlineStr"><is><t xml:space="preserve">${xesc(v)}</t></is></c>`);x+='</row>'});
+ return x+'</sheetData></worksheet>'
+}
+function crc32(buf){let c=0xffffffff;for(let i=0;i<buf.length;i++){c^=buf[i];for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0)}return (c^0xffffffff)>>>0}
+function zipStore(files){
+ const enc=new TextEncoder(),parts=[],central=[];let off=0;
+ for(const [name,content] of files){const nb=enc.encode(name),d=enc.encode(content),crc=crc32(d),a=new Uint8Array(30+nb.length+d.length),v=new DataView(a.buffer);v.setUint32(0,0x04034b50,true);v.setUint16(4,20,true);v.setUint32(14,crc,true);v.setUint32(18,d.length,true);v.setUint32(22,d.length,true);v.setUint16(26,nb.length,true);a.set(nb,30);a.set(d,30+nb.length);parts.push(a);const q=new Uint8Array(46+nb.length),w=new DataView(q.buffer);w.setUint32(0,0x02014b50,true);w.setUint16(4,20,true);w.setUint16(6,20,true);w.setUint32(16,crc,true);w.setUint32(20,d.length,true);w.setUint32(24,d.length,true);w.setUint16(28,nb.length,true);w.setUint32(42,off,true);q.set(nb,46);central.push(q);off+=a.length}
+ const cs=central.reduce((a,b)=>a+b.length,0),end=new Uint8Array(22),v=new DataView(end.buffer);v.setUint32(0,0x06054b50,true);v.setUint16(8,files.length,true);v.setUint16(10,files.length,true);v.setUint32(12,cs,true);v.setUint32(16,off,true);
+ return new Blob([...parts,...central,[end]],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+}
+function exportXlsx(){
+ save();syncCore();
+ const rows=[['Campaign','The Unwritten Lands'],['System','Pathfinder'],['Player',val('player')],['Character Name',val('name')],['Ancestry',val('ancestry')],['Heritage',val('heritage')],['Class',val('class')],['Level',val('level')],['Concept',val('concept')],['Exported',new Date().toISOString()]];
+ const files=[];
+ files.push(['Character Import',sheetXml(['Field','Value'],rows)]);
+ files.push(['Background Events',sheetXml(['Event ID','Table Code','Age/Period','Roll','Result / Player Entry','Player Interpretation','People/NPCs','Place/Map Code','Character Impact','Trait Letter','Importance','Campaign Flag','Potential Elements','What Character Believes','What Character Does Not Know','Pathfinder Conversion Candidate','Review Status'],state.events.map(e=>[e.id,e.code,e.age,e.roll,e.result,e.interp,e.people,e.place,e.impact,e.trait,e.importance,e.flag,e.creates,e.belief,e.unknown,e.mechanical,e.status]))]);
+ files.push(['Table Queue',sheetXml(['Queue ID','Table Code','Sent Here By','Roll','Result','Next Table(s)','Return/Bookmark','Sensitivity','Status','Created'],state.queue.map(q=>[q.id,q.code,q.from,q.roll,q.result,q.next,q.ret,q.sens,q.status,q.created]))]);
+ files.push(['Heritage & Birth',sheetXml(['Table Code','Book Page','Result / Player Entry','Player Interpretation','Potential Next Table'],state.core.map(e=>[e.code,coreCodes.find(c=>c[0]===e.code)?.[2]||'',e.result,e.interp,e.next]))]);
+ files.push(['Personality & Values',sheetXml(['Entry','Value'],[['Primary Motivation',val('mot1')],['Primary Strength',val('mot1s')],['Secondary Motivation',val('mot2')],['Secondary Strength',val('mot2s')],['Third Motivation',val('mot3')],['Third Strength',val('mot3s')],['Values 520',val('values')],['Traits 522/523',val('traits')],['Darkside',val('dark')],['Neutral',val('neutral')],['Lightside',val('light')],['Pathfinder Alignment / Attitude',val('alignment')]])]);
+ files.push(['History & Hooks',sheetXml(['Field','Player Entry'],[['Motivation in my words',val('motwords')],['Unified History',val('history')],['What I Believe',val('beliefs')],["What I Don't Know",val('unknown')],['Places',val('places')],['People',val('people')],['Campaign Ideas',val('hooks')],['PC Connections',val('pcconnect')]])]);
+ files.push(['Pathfinder Conversion',sheetXml(['Field','Player Entry'],[['Background Skill / Training Candidates',val('convskills')],['Mechanical Conversion Requests',val('convmech')],['Extraordinary / Campaign-Level Results',val('convcampaign')],['Player-Safe Conversion Notes',val('convnotes')]])]);
+ files.push(['AI Review Queue',sheetXml(['Queue ID','Table Code','Roll','Result','Sensitivity','Status','Safe AI Instruction'],state.queue.map(q=>[q.id,q.code,q.roll,q.result,q.sens,q.status,'Identify branch/return, flag secret or contradiction risk, and tell the player what to record without inventing unsupported results.']))]);
+ files.push(['README',sheetXml(['Topic','Instructions'],[
+ ['Purpose','Player submission for The Unwritten Lands GM Atlas — v5.'],
+ ['Workflow','Roll only when instructed → record Table Code/Roll/Result → pause for AI review when unusual → follow branch → return to bookmark → continue.'],
+ ['AI Safety','Send only player-safe information. Never send table 968/969 contents, GM notes, planned reveals, hidden truths, or the answer to a mystery.'],
+ ['Canon','Nothing becomes campaign canon until the GM approves it.'],
+ ['Conversion','Heroes of Legend history supplies narrative evidence; Pathfinder supplies the actual mechanics.'],
+ ['Personality','Darkside/Neutral/Lightside are treated as tendencies, not alignment restrictions.'],
+ ['Sensitive Results','Player owns interpretation. Sensitive or potentially harmful results may be changed/rerolled with player/GM approval.'],
+ ['Extraordinary Results','Flag as campaign-level possibilities and require GM review before becoming mechanics or canon.'],
+ ['Linking Events','After the raw history is complete, use the linking process to connect events into a coherent life story.'],
+ ['GM-Only','Tables 968 and 969 are GM-only. Keep their contents out of player-facing files.']
+ ])]);
+ const blob=zipStore(files);downloadBlob(blob,(val('name')||'Character')+'_The_Unwritten_Lands_v5_GM_Submission.xlsx')
+}
+function download(data,name,type){downloadBlob(new Blob([data],{type}),name)}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function init(){load();coreUI();buildDice();renderSteps();renderLedger();renderQueue();runGuard();document.querySelectorAll('input,textarea,select').forEach(x=>x.addEventListener('input',save))}
+init();
+</script>
+
+<!-- UNWRITTEN LANDS v6 TIMELINE & CONVERGENCE ADDITIONS -->
+<section id="ul-v6-timeline-convergence" style="margin:24px 0;padding:20px;border:2px solid #555;border-radius:12px;background:#f7f4ec;">
+  <h2>Timeline &amp; Convergence</h2>
+  <p><strong>Campaign Start Year:</strong>
+    <input id="ulCampaignStartYear" type="number" placeholder="e.g. 1000" style="width:120px;">
+  </p>
+
+  <h3>Character Timeline</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+    <label>PC ID <input id="ulPcId" type="text" placeholder="PC-001"></label>
+    <label>Name <input id="ulPcName" type="text"></label>
+    <label>Pathfinder Age <input id="ulPcAge" type="number"></label>
+    <label>Birth Year <input id="ulPcBirthYear" type="number"></label>
+    <label>Life Stage <input id="ulPcLifeStage" type="text" placeholder="Adult"></label>
+  </div>
+
+  <h3>Background Event Timeline</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+    <label>Event ID <input id="ulBgId" type="text" placeholder="BG-001"></label>
+    <label>Approx. Year <input id="ulBgYear" type="number"></label>
+    <label>NPC IDs <input id="ulBgNpcs" type="text" placeholder="NPC-001"></label>
+    <label>Location IDs <input id="ulBgLocs" type="text" placeholder="T-01"></label>
+    <label>Organization IDs <input id="ulBgOrgs" type="text" placeholder="ORG-001"></label>
+  </div>
+
+  <h3>New Place / Entity Creation</h3>
+  <p>When a result creates something new, the player may name it. A new location may be placed on the player map after the GM checks continuity and secrets.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
+    <label>Entity Type
+      <select id="ulEntityType">
+        <option>Place</option><option>NPC</option><option>Organization</option><option>Item</option><option>Other</option>
+      </select>
+    </label>
+    <label>Name <input id="ulEntityName" type="text"></label>
+    <label>Map Code / Placement <input id="ulEntityPlacement" type="text" placeholder="T-04 or Placement Pending"></label>
+  </div>
+
+  <h3>Character Knowledge</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <label>What the Character Believes<textarea id="ulBelief" rows="4" style="width:100%;"></textarea></label>
+    <label>What the Character Does Not Know<textarea id="ulUnknown" rows="4" style="width:100%;"></textarea></label>
+  </div>
+
+  <h3>Convergence Check</h3>
+  <p>Complete after all character histories are finished. Do not force connections; identify natural intersections.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <label>Where is the character now?<textarea id="ulNowWhere" rows="3" style="width:100%;"></textarea></label>
+    <label>What are they doing?<textarea id="ulNowDoing" rows="3" style="width:100%;"></textarea></label>
+    <label>Who do they know?<textarea id="ulNowKnow" rows="3" style="width:100%;"></textarea></label>
+    <label>What do they want?<textarea id="ulNowWant" rows="3" style="width:100%;"></textarea></label>
+    <label>Unresolved problems<textarea id="ulNowProblems" rows="3" style="width:100%;"></textarea></label>
+    <label>Why adventure now?<textarea id="ulNowAdventure" rows="3" style="width:100%;"></textarea></label>
+    <label style="grid-column:1/-1;">Natural convergence point<textarea id="ulConvergence" rows="3" style="width:100%;"></textarea></label>
+  </div>
+
+  <div style="margin-top:14px;padding:12px;border-radius:8px;background:#eee;">
+    <strong>GM Workflow:</strong>
+    ROLL → REVIEW → REVEAL → RETELL → NAME → PLACE → RECORD → NEXT
+  </div>
+</section>
+<script>
+(function(){
+  const ids = [
+    "ulCampaignStartYear","ulPcId","ulPcName","ulPcAge","ulPcBirthYear","ulPcLifeStage",
+    "ulBgId","ulBgYear","ulBgNpcs","ulBgLocs","ulBgOrgs","ulEntityType","ulEntityName",
+    "ulEntityPlacement","ulBelief","ulUnknown","ulNowWhere","ulNowDoing","ulNowKnow",
+    "ulNowWant","ulNowProblems","ulNowAdventure","ulConvergence"
+  ];
+  const key="unwrittenLandsV6TimelineConvergence";
+  function save(){
+    const o={};
+    ids.forEach(id=>{const e=document.getElementById(id); if(e)o[id]=e.value;});
+    try{localStorage.setItem(key,JSON.stringify(o));}catch(e){}
+  }
+  function load(){
+    try{
+      const o=JSON.parse(localStorage.getItem(key)||"{}");
+      ids.forEach(id=>{const e=document.getElementById(id); if(e&&o[id]!==undefined)e.value=o[id];});
+    }catch(e){}
+  }
+  document.addEventListener("input", save);
+  document.addEventListener("change", save);
+  window.addEventListener("load", load);
+})();
+</script>
+
+</body></html>
